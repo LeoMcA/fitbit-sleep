@@ -1,0 +1,84 @@
+<!doctype html>
+<meta charset="utf-8">
+<body>
+
+<div id="chart">
+
+</div>
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script>
+
+async function main () {
+  const margin = {
+    top: 25,
+    right: 25,
+    bottom: 25,
+    left: 25
+  }
+
+  const width = 1460 - margin.left - margin.right
+  const height = 10000 - margin.top - margin.bottom
+
+  const svg = d3.select("#chart").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+
+  const { sleep: data } = await d3.json("sleep.json")
+
+  const y = d3.scaleOrdinal()
+    .range([...data.keys()])
+
+  const start_time = subtract(getMidnight(), getHours(4))
+  const end_time = add(getMidnight(), getHours(13))
+
+  const x = d3.scaleTime()
+    .range([0, width])
+    .domain([
+      start_time,
+      end_time
+    ])
+
+
+
+  svg.append("g")
+    .call(d3.axisTop(x))
+
+  const bars = svg.selectAll(".bar")
+    .data(data)
+    .enter()
+    .append("g")
+
+  bars.append("rect")
+    .attr("y", d => y(d.dateOfSleep) * 20)
+    .attr("height", 10)
+    .attr("x", d => x(add(getMidnight(), subtract(new Date(d.startTime), new Date(d.dateOfSleep)))))
+    .attr("width", d => x(add(start_time, subtract(new Date(d.endTime), new Date(d.startTime)))))
+}
+
+function getMidnight() {
+  const d = new Date()
+  d.setHours(0)
+  d.setMinutes(0)
+  d.setSeconds(0)
+  return d
+}
+
+function getHours(hours) {
+  return new Date(hours * 60 * 60 * 1000)
+}
+
+function subtract(x, y) {
+  return new Date(x.getTime() - y.getTime())
+}
+
+function add(x, y) {
+  return new Date(x.getTime() + y.getTime())
+}
+
+main()
+
+</script>
+</body>
